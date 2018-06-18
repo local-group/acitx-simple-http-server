@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style> a { text-decoration:none; } </style>
+  </head>
+  <body>
+    <form style="margin-top:1em; margin-bottom:1em;"
+          action="/{{ path }}"
+          method="POST"
+          enctype="multipart/form-data">
+      <input type="file" name="files" accept="*" multiple />
+      <input type="submit" value="Upload" />
+    </form>
+    <div>
+      <a href="/"><strong>[Root]</strong></a>
+      {% for item in breadcrumb %}
+        <a href="/{{ item.link }}/"><strong>{{ item.label }}</strong></a>
+      {% endfor %}
+    </div>
+    <hr />
+    <table>
+      <tr>
+        <th><a href="/{{ currentLink }}?sort=name&order=asc">Name</a></th>
+        <th><a href="/{{ currentLink }}?sort=modified&order=asc">Last modified</a></th>
+        <th><a href="/{{ currentLink }}?sort=size&order=asc">Size</a></th>
+      </tr>
+      <tr><td style="border-top:1px dashed #BBB;" colspan="5"></td></tr>
+      {% if isTop %}
+        <tr>
+          <td><a href="/{{ upLink }}"><strong>[Up]</strong></a></td>
+          <td></td>
+          <td></td>
+        </tr>
+      {% else %}
+        <tr><td>&nbsp;</td></tr>
+      {% endif %}
+      {% for row in rows %}
+        <tr>
+          <td><a {{ row.linkStyle }} href="/{{ row.link }}">{{ row.label }}</a></td>
+          <td style="color:#888;">[{{ row.modified }}]</td>
+          <td><bold>{{ row.fileSize }}</bold></td>
+        </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>
