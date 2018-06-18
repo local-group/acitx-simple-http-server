@@ -21,14 +21,14 @@
     <hr />
     <table>
       <tr>
-        <th><a href="/{{ currentLink }}?sort=name&order=asc">Name</a></th>
-        <th><a href="/{{ currentLink }}?sort=modified&order=asc">Last modified</a></th>
-        <th><a href="/{{ currentLink }}?sort=size&order=asc">Size</a></th>
+        <th><a href="/{{ current_link }}?sort=name&order=asc">Name</a></th>
+        <th><a href="/{{ current_link }}?sort=modified&order=asc">Last modified</a></th>
+        <th><a href="/{{ current_link }}?sort=size&order=asc">Size</a></th>
       </tr>
       <tr><td style="border-top:1px dashed #BBB;" colspan="5"></td></tr>
-      {% if isTop %}
+      {% if up_link.exists %}
         <tr>
-          <td><a href="/{{ upLink }}"><strong>[Up]</strong></a></td>
+          <td><a href="/{{ up_link.link }}"><strong>{{ up_link.label }}</strong></a></td>
           <td></td>
           <td></td>
         </tr>
@@ -37,9 +37,9 @@
       {% endif %}
       {% for row in rows %}
         <tr>
-          <td><a {{ row.linkStyle }} href="/{{ row.link }}">{{ row.label }}</a></td>
+          <td><a {{ row.linkstyle }} href="/{{ row.link }}">{{ row.label }}</a></td>
           <td style="color:#888;">[{{ row.modified }}]</td>
-          <td><bold>{{ row.fileSize }}</bold></td>
+          <td><bold>{{ row.filesize }}</bold></td>
         </tr>
       {% endfor %}
     </table>
