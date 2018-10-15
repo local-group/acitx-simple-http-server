@@ -2,7 +2,10 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <style> a { text-decoration:none; } </style>
+    <style>
+      a { text-decoration:none; }
+      td > a.link-directory { font-weight: bold; }
+    </style>
   </head>
   <body>
     <form style="margin-top:1em; margin-bottom:1em;"
@@ -21,14 +24,14 @@
     <hr />
     <table>
       <tr>
-        <th><a href="/{{ current_link }}?sort=name&order=asc">Name</a></th>
-        <th><a href="/{{ current_link }}?sort=modified&order=asc">Last modified</a></th>
-        <th><a href="/{{ current_link }}?sort=size&order=asc">Size</a></th>
+        <th><a href="{{ current_link }}?sort=name&order=asc">Name</a></th>
+        <th><a href="{{ current_link }}?sort=modified&order=asc">Last modified</a></th>
+        <th><a href="{{ current_link }}?sort=size&order=asc">Size</a></th>
       </tr>
       <tr><td style="border-top:1px dashed #BBB;" colspan="5"></td></tr>
       {% if up_link.exists %}
         <tr>
-          <td><a href="/{{ up_link.link }}"><strong>{{ up_link.label }}</strong></a></td>
+          <td><a href="{{ up_link.link }}"><strong>{{ up_link.label }}</strong></a></td>
           <td></td>
           <td></td>
         </tr>
@@ -37,9 +40,20 @@
       {% endif %}
       {% for row in rows %}
         <tr>
-          <td><a style="{{ row.linkstyle }}" href="/{{ row.link }}">{{ row.label }}</a></td>
-          <td style="color:#888;">[{{ row.modified }}]</td>
-          <td><bold>{{ row.filesize }}</bold></td>
+          <td>
+            <a class="{{ row.link_class.as_str() }}" href="{{ row.link.as_str() }}">
+              {%- match row.file_type -%}
+              {%- when FileType::Directory -%}
+                {{ row.filename.as_str() }}/
+              {%- when FileType::File -%}
+                {{ row.filename.as_str() }}
+              {%- else -%}
+                unsupported file type
+              {%- endmatch -%}
+            </a>
+          </td>
+          <td style="color:#888;">[{{ row.modified.as_str() }}]</td>
+          <td><bold>{{ row.filesize.as_str() }}</bold></td>
         </tr>
       {% endfor %}
     </table>

@@ -41,11 +41,26 @@ fn encode_link_path(path: &[String]) -> String {
     }).collect::<Vec<String>>().join("/")
 }
 
+#[derive(Eq, PartialEq)]
+enum FileType {
+    Directory,
+    File,
+}
+
+impl FileType {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            FileType::Directory => "directory",
+            FileType::File => "file"
+        }
+    }
+}
+
 struct RowItem {
+    file_type: FileType,
     filename: String,
-    linkstyle: &'static str,
     link: String,
-    label: String,
+    link_class: String,
     modified: String,
     filesize: String,
 }
@@ -64,28 +79,25 @@ impl<'a> From<&'a fs::DirEntry> for RowItem {
             convert(metadata.len() as f64)
         };
 
-        let label = if metadata.is_dir() {
-            format!("{}/", &filename)
-        } else { filename.clone() };
+        let file_type = if metadata.is_dir() {
+            FileType::Directory
+        } else {
+            FileType::File
+        };
 
         let mut link_parts = vec![];
         link_parts.push(filename.clone());
         if metadata.is_dir() {
             link_parts.push("".to_owned());
         }
-        let link = encode_link_path(&link_parts);
-
-        let linkstyle = if metadata.is_dir() {
-            "font-weight: bold;"
-        } else {
-            ""
-        };
+        let link = format!("/{}", encode_link_path(&link_parts));
+        let link_class = format!("link-{}", file_type.to_str());
 
         RowItem {
             filename,
-            linkstyle,
+            file_type,
             link,
-            label,
+            link_class,
             modified,
             filesize,
         }
@@ -104,7 +116,7 @@ struct UpLink<'a> {
 }
 
 #[derive(Template)]
-#[template(path = "index.jinja2")]
+#[template(path = "index.jinja2", print = "all")]
 struct IndexPage<'a> {
     path: &'a str,
     breadcrumb: Vec<SimpleLink<'a>>,
@@ -127,7 +139,7 @@ fn index(
     let rendered = IndexPage {
         path: path.as_str(),
         breadcrumb: vec![],
-        up_link: UpLink{ exists: false, link: "", label: "" },
+        up_link: UpLink{ exists: false, link: "/", label: "Up" },
         current_link: "/",
         rows
     }.render()
