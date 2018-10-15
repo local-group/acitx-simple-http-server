@@ -37,7 +37,7 @@
       {% endif %}
       {% for row in rows %}
         <tr>
-          <td><a {{ row.linkstyle }} href="/{{ row.link }}">{{ row.label }}</a></td>
+          <td><a style="{{ row.linkstyle }}" href="/{{ row.link }}">{{ row.label }}</a></td>
           <td style="color:#888;">[{{ row.modified }}]</td>
           <td><bold>{{ row.filesize }}</bold></td>
         </tr>

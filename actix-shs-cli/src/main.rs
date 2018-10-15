@@ -76,7 +76,7 @@ impl<'a> From<&'a fs::DirEntry> for RowItem {
         let link = encode_link_path(&link_parts);
 
         let linkstyle = if metadata.is_dir() {
-            "style=\"font-weight: bold;\""
+            "font-weight: bold;"
         } else {
             ""
         };
@@ -129,7 +129,7 @@ fn index(
         breadcrumb: vec![],
         up_link: UpLink{ exists: false, link: "", label: "" },
         current_link: "/",
-        rows: rows
+        rows
     }.render()
         .unwrap();
     Ok(HttpResponse::Ok().content_type("text/html").body(rendered))
