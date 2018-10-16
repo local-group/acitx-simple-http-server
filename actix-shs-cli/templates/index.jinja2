@@ -9,12 +9,13 @@
   </head>
   <body>
     <form style="margin-top:1em; margin-bottom:1em;"
-          action="{{ directory.as_str() }}"
+          action="{{ current_directory.as_str() }}"
           method="POST"
           enctype="multipart/form-data">
       <input type="file" name="files" accept="*" multiple />
       <input type="submit" value="Upload" />
     </form>
+
     <div>
       <a href="/"><strong>[Root]</strong></a>
       <span> / </span>
@@ -27,12 +28,14 @@
         {% endif %}
       {% endfor %}
     </div>
+
     <hr />
+
     <table>
       <tr>
-        <th><a href="{{ current_link.as_str() }}?sort=name&order=asc">Name</a></th>
-        <th><a href="{{ current_link.as_str() }}?sort=modified&order=asc">Last modified</a></th>
-        <th><a href="{{ current_link.as_str() }}?sort=size&order=asc">Size</a></th>
+        <th><a href="{{ current_directory.as_str() }}?sort=name&order={{ name_order.as_str() }}">Name</a></th>
+        <th><a href="{{ current_directory.as_str() }}?sort=modified&order={{ modified_order.as_str() }}">Last modified</a></th>
+        <th><a href="{{ current_directory.as_str() }}?sort=size&order={{ size_order.as_str() }}">Size</a></th>
       </tr>
       <tr><td style="border-top:1px dashed #BBB;" colspan="5"></td></tr>
       {% for row in rows %}

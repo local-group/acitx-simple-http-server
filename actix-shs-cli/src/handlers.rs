@@ -5,6 +5,7 @@ use std::convert::From;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::cmp::Ordering;
 
 use url::percent_encoding::{utf8_percent_encode, percent_decode, PATH_SEGMENT_ENCODE_SET};
 use chrono::{DateTime, Local, TimeZone};
@@ -66,10 +67,14 @@ struct RowItem {
     filesize: String,
 }
 
+struct Entry {
+    filename: String,
+    metadata: fs::Metadata
+}
+
 impl RowItem {
-    fn new(entry: &fs::DirEntry, path_prefix: &[String]) -> RowItem {
-        let filename = entry.file_name().to_string_lossy().into_owned();
-        let metadata = entry.metadata().unwrap();
+    fn new(entry: Entry, path_prefix: &[String]) -> RowItem {
+        let Entry { filename, metadata } = entry;
 
         let modified = system_time_to_date_time(metadata.modified().unwrap())
             .format("%Y-%m-%d %H:%M:%S").to_string();
@@ -113,10 +118,12 @@ struct SimpleLink {
 #[derive(Template)]
 #[template(path = "index.jinja2", print = "all")]
 struct IndexPage {
-    directory: String,
+    current_directory: String,
     breadcrumb: Vec<SimpleLink>,
-    current_link: String,
-    rows: Vec<RowItem>
+    rows: Vec<RowItem>,
+    name_order: String,
+    modified_order: String,
+    size_order: String,
 }
 
 
@@ -135,6 +142,7 @@ impl<S> Handler<S> for MethodGetHandler {
     type Result = Result<HttpResponse, Error>;
 
     fn handle(&self, req: &HttpRequest<S>) -> Self::Result {
+
         let mut fs_path = self.args.root.clone();
         let path_prefix = req
             .path()
@@ -166,16 +174,73 @@ impl<S> Handler<S> for MethodGetHandler {
             breadcrumb.reverse();
         }
 
-        let rows = fs::read_dir(&fs_path)?
-            .map(|result| result.unwrap())
-            .map(|dir_entry| RowItem::new(&dir_entry, &path_prefix))
+        let mut entries = Vec::new();
+        for entry_result in fs::read_dir(&fs_path)? {
+            let entry = entry_result?;
+            entries.push(Entry {
+                filename: entry.file_name().to_string_lossy().into_owned(),
+                metadata: entry.metadata()?
+            });
+        }
+
+        let query = req.query();
+        let sort_field = query.get("sort").map(|s| s.as_str()).unwrap_or("name");
+        let order = query.get("order").map(|s| s.as_str()).unwrap_or("asc");
+        entries.sort_by(|a, b| {
+            match sort_field {
+                "name" => {
+                    a.filename.cmp(&b.filename)
+                }
+                "modified" => {
+                    let a = a.metadata.modified().unwrap();
+                    let b = b.metadata.modified().unwrap();
+                    a.cmp(&b)
+                }
+                "size" => {
+                    if a.metadata.is_dir() == b.metadata.is_dir()
+                        || a.metadata.is_file() == b.metadata.is_file() {
+                            a.metadata.len().cmp(&b.metadata.len())
+                        } else if a.metadata.is_dir() {
+                            Ordering::Less
+                        } else {
+                            Ordering::Greater
+                        }
+                }
+                _ => {
+                    a.filename.cmp(&b.filename)
+                }
+            }
+        });
+        if order == "desc" {
+            entries.reverse();
+        }
+        let name_order = match (sort_field, order) {
+            ("name", "asc") => "desc",
+            _ => "asc",
+        };
+        let modified_order = match (sort_field, order) {
+            ("modified", "asc") => "desc",
+            _ => "asc",
+        };
+        let size_order = match (sort_field, order) {
+            ("size", "asc") => "desc",
+            _ => "asc",
+        };
+
+        let rows = entries
+            .into_iter()
+            .map(|entry| RowItem::new(entry, &path_prefix))
             .collect::<Vec<RowItem>>();
 
+        let mut current_directory = path_prefix.to_owned();
+        current_directory.push("".to_owned());
         let rendered = IndexPage {
-            directory: encode_link_path(&path_prefix, true),
-            current_link: format!("{}/", encode_link_path(&path_prefix, true)),
+            current_directory: encode_link_path(&current_directory, true),
             breadcrumb,
             rows,
+            name_order: name_order.to_string(),
+            modified_order: modified_order.to_string(),
+            size_order: size_order.to_string(),
         }.render()
             .unwrap();
         Ok(HttpResponse::Ok().content_type("text/html").body(rendered))
