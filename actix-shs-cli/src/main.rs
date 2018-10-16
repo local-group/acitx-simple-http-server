@@ -24,10 +24,11 @@ use actix_web::{server, http, error, App, Error, Path, Query, HttpResponse};
 mod args;
 mod handlers;
 
+use args::Args;
 use handlers::{MethodGetHandler, MethodHeadHandler};
 
 fn main() {
-    let args = Arc::new(args::parse_args());
+    let args = Arc::new(Args::from_clap());
     println!("{:#?}", args);
     server::new(move || {
         let method_get_handler = MethodGetHandler::new(Arc::clone(&args));

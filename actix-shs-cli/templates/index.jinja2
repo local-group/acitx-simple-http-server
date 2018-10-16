@@ -9,7 +9,7 @@
   </head>
   <body>
     <form style="margin-top:1em; margin-bottom:1em;"
-          action="/{{ directory.as_str() }}"
+          action="{{ directory.as_str() }}"
           method="POST"
           enctype="multipart/form-data">
       <input type="file" name="files" accept="*" multiple />
@@ -17,27 +17,24 @@
     </form>
     <div>
       <a href="/"><strong>[Root]</strong></a>
+      <span> / </span>
       {% for item in breadcrumb %}
-        <a href="/{{ item.link }}/"><strong>{{ item.label }}</strong></a>
+        {% if item.link.as_str() != "" %}
+          <a href="{{ item.link.as_str() }}/"><strong>{{ item.label.as_str() }}</strong></a>
+          <span> / </span>
+        {% else %}
+          {{ item.label.as_str() }}
+        {% endif %}
       {% endfor %}
     </div>
     <hr />
     <table>
       <tr>
-        <th><a href="{{ current_link }}?sort=name&order=asc">Name</a></th>
-        <th><a href="{{ current_link }}?sort=modified&order=asc">Last modified</a></th>
-        <th><a href="{{ current_link }}?sort=size&order=asc">Size</a></th>
+        <th><a href="{{ current_link.as_str() }}?sort=name&order=asc">Name</a></th>
+        <th><a href="{{ current_link.as_str() }}?sort=modified&order=asc">Last modified</a></th>
+        <th><a href="{{ current_link.as_str() }}?sort=size&order=asc">Size</a></th>
       </tr>
       <tr><td style="border-top:1px dashed #BBB;" colspan="5"></td></tr>
-      {% if up_link.exists %}
-        <tr>
-          <td><a href="{{ up_link.link }}"><strong>{{ up_link.label }}</strong></a></td>
-          <td></td>
-          <td></td>
-        </tr>
-      {% else %}
-        <tr><td>&nbsp;</td></tr>
-      {% endif %}
       {% for row in rows %}
         <tr>
           <td>

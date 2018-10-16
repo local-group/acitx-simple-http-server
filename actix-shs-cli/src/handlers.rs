@@ -31,10 +31,15 @@ fn system_time_to_date_time(t: SystemTime) -> DateTime<Local> {
     Local.timestamp(sec, nsec)
 }
 
-fn encode_link_path(path: &[String]) -> String {
-    path.iter().map(|s| {
+fn encode_link_path(path: &[String], with_root: bool) -> String {
+    let link = path.iter().map(|s| {
         utf8_percent_encode(s, PATH_SEGMENT_ENCODE_SET).to_string()
-    }).collect::<Vec<String>>().join("/")
+    }).collect::<Vec<String>>().join("/");
+    if with_root {
+        format!("/{}", link)
+    } else {
+        link
+    }
 }
 
 #[derive(Eq, PartialEq)]
@@ -61,8 +66,8 @@ struct RowItem {
     filesize: String,
 }
 
-impl<'a> From<&'a fs::DirEntry> for RowItem {
-    fn from(entry: &'a fs::DirEntry) -> Self {
+impl RowItem {
+    fn new(entry: &fs::DirEntry, path_prefix: &[String]) -> RowItem {
         let filename = entry.file_name().to_string_lossy().into_owned();
         let metadata = entry.metadata().unwrap();
 
@@ -81,12 +86,12 @@ impl<'a> From<&'a fs::DirEntry> for RowItem {
             FileType::File
         };
 
-        let mut link_parts = vec![];
+        let mut link_parts = path_prefix.to_owned();
         link_parts.push(filename.clone());
         if metadata.is_dir() {
             link_parts.push("".to_owned());
         }
-        let link = format!("/{}", encode_link_path(&link_parts));
+        let link = encode_link_path(&link_parts, true);
         let link_class = format!("link-{}", file_type.to_str());
 
         RowItem {
@@ -100,24 +105,17 @@ impl<'a> From<&'a fs::DirEntry> for RowItem {
     }
 }
 
-struct SimpleLink<'a> {
-    link: &'a str,
-    label: &'a str,
-}
-
-struct UpLink<'a> {
-    exists: bool,
-    link: &'a str,
-    label: &'a str,
+struct SimpleLink {
+    link: String,
+    label: String,
 }
 
 #[derive(Template)]
 #[template(path = "index.jinja2", print = "all")]
-struct IndexPage<'a> {
+struct IndexPage {
     directory: String,
-    breadcrumb: Vec<SimpleLink<'a>>,
-    up_link: UpLink<'a>,
-    current_link: &'a str,
+    breadcrumb: Vec<SimpleLink>,
+    current_link: String,
     rows: Vec<RowItem>
 }
 
@@ -152,17 +150,32 @@ impl<S> Handler<S> for MethodGetHandler {
             fs_path.push(part);
         }
 
+        let mut breadcrumb = Vec::new();
+        if !path_prefix.is_empty() {
+            let mut parts = path_prefix.to_owned();
+            breadcrumb.push(SimpleLink {
+                link: String::new(),
+                label: parts.pop().unwrap().to_string(),
+            });
+            while !parts.is_empty() {
+                breadcrumb.push(SimpleLink {
+                    link: encode_link_path(&parts, true),
+                    label: parts.pop().unwrap().to_string(),
+                });
+            }
+            breadcrumb.reverse();
+        }
+
         let rows = fs::read_dir(&fs_path)?
             .map(|result| result.unwrap())
-            .map(|dir_entry| RowItem::from(&dir_entry))
+            .map(|dir_entry| RowItem::new(&dir_entry, &path_prefix))
             .collect::<Vec<RowItem>>();
 
         let rendered = IndexPage {
-            directory: encode_link_path(&path_prefix),
-            breadcrumb: vec![],
-            up_link: UpLink{ exists: false, link: "/", label: "Up" },
-            current_link: "/",
-            rows
+            directory: encode_link_path(&path_prefix, true),
+            current_link: format!("{}/", encode_link_path(&path_prefix, true)),
+            breadcrumb,
+            rows,
         }.render()
             .unwrap();
         Ok(HttpResponse::Ok().content_type("text/html").body(rendered))
