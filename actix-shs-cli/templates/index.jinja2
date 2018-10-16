@@ -9,7 +9,7 @@
   </head>
   <body>
     <form style="margin-top:1em; margin-bottom:1em;"
-          action="/{{ path }}"
+          action="/{{ directory.as_str() }}"
           method="POST"
           enctype="multipart/form-data">
       <input type="file" name="files" accept="*" multiple />
@@ -42,14 +42,13 @@
         <tr>
           <td>
             <a class="{{ row.link_class.as_str() }}" href="{{ row.link.as_str() }}">
-              {%- match row.file_type -%}
-              {%- when FileType::Directory -%}
+              {%- if row.file_type == "directory" -%}
                 {{ row.filename.as_str() }}/
-              {%- when FileType::File -%}
+              {%- else if row.file_type == "file" -%}
                 {{ row.filename.as_str() }}
               {%- else -%}
                 unsupported file type
-              {%- endmatch -%}
+              {%- endif -%}
             </a>
           </td>
           <td style="color:#888;">[{{ row.modified.as_str() }}]</td>
