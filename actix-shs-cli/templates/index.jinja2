@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -9,7 +9,7 @@
   </head>
   <body>
     <form style="margin-top:1em; margin-bottom:1em;"
-          action="{{ current_directory.as_str() }}"
+          action="{{ current_directory }}"
           method="POST"
           enctype="multipart/form-data">
       <input type="file" name="files" accept="*" multiple />
@@ -20,11 +20,11 @@
       <a href="/"><strong>[Root]</strong></a>
       <span> / </span>
       {% for item in breadcrumb %}
-        {% if item.link.as_str() != "" %}
-          <a href="{{ item.link.as_str() }}/"><strong>{{ item.label.as_str() }}</strong></a>
+        {% if item.link != "" %}
+          <a href="{{ item.link }}/"><strong>{{ item.label }}</strong></a>
           <span> / </span>
         {% else %}
-          {{ item.label.as_str() }}
+          {{ item.label }}
         {% endif %}
       {% endfor %}
     </div>
@@ -33,26 +33,26 @@
 
     <table>
       <tr>
-        <th><a href="{{ current_directory.as_str() }}?sort=name&order={{ name_order.as_str() }}">Name</a></th>
-        <th><a href="{{ current_directory.as_str() }}?sort=modified&order={{ modified_order.as_str() }}">Last modified</a></th>
-        <th><a href="{{ current_directory.as_str() }}?sort=size&order={{ size_order.as_str() }}">Size</a></th>
+        <th><a href="{{ current_directory }}?sort=name&order={{ name_order }}">Name</a></th>
+        <th><a href="{{ current_directory }}?sort=modified&order={{ modified_order }}">Last modified</a></th>
+        <th><a href="{{ current_directory }}?sort=size&order={{ size_order }}">Size</a></th>
       </tr>
       <tr><td style="border-top:1px dashed #BBB;" colspan="5"></td></tr>
       {% for row in rows %}
         <tr>
           <td>
-            <a class="{{ row.link_class.as_str() }}" href="{{ row.link.as_str() }}">
+            <a class="{{ row.link_class }}" href="{{ row.link }}">
               {%- if row.file_type == "directory" -%}
-                {{ row.filename.as_str() }}/
+                {{ row.filename }}/
               {%- else if row.file_type == "file" -%}
-                {{ row.filename.as_str() }}
+                {{ row.filename }}
               {%- else -%}
                 unsupported file type
               {%- endif -%}
             </a>
           </td>
-          <td style="color:#888;">[{{ row.modified.as_str() }}]</td>
-          <td><bold>{{ row.filesize.as_str() }}</bold></td>
+          <td style="color:#888;">[{{ row.modified }}]</td>
+          <td><bold>{{ row.filesize }}</bold></td>
         </tr>
       {% endfor %}
     </table>

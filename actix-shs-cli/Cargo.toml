@@ -12,3 +12,6 @@ chrono = "0.4"
 clap = "2.32"
 actix-web = "0.7"
 actix-shs = { path = "../actix-shs", version = "0.1.0" }
+
+[build-dependencies]
+askama = "0.7"

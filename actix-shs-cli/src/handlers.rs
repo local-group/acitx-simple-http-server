@@ -116,7 +116,7 @@ struct SimpleLink {
 }
 
 #[derive(Template)]
-#[template(path = "index.jinja2", print = "all")]
+#[template(path = "index.jinja2", escape ="html")]
 struct IndexPage {
     current_directory: String,
     breadcrumb: Vec<SimpleLink>,
